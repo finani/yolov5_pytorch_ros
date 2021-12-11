@@ -28,7 +28,7 @@ class DetectorManager():
     def __init__(self):
         self.image_topic = rospy.get_param("~image_topic")
         self.weights = rospy.get_param("~weights")
-        self.weights = os.path.join(package_path, "scripts", "weights", self.weights)
+        self.weights = os.path.join(package_path, "weights", self.weights)
         self.imgsz = int(rospy.get_param("~imgsz"))
         self.conf_thres = float(rospy.get_param("~conf-thres"))
         self.iou_thres = float(rospy.get_param("~iou-thres"))
@@ -50,7 +50,7 @@ class DetectorManager():
 
         # Load CvBridge
         self.bridge = CvBridge()
-        
+
         # Define subscribers
         self.image_sub = rospy.Subscriber(self.image_topic, Image, self.image_detect, queue_size = 1, buff_size = 2**24)
 
@@ -74,7 +74,7 @@ class DetectorManager():
         detection_results = BoundingBoxes()
         detection_results.header = data.header
         detection_results.image_header = data.header
-        
+
         # DataLoader
         dataset = LoadImage(self.cv_image, img_size=self.imgsz, stride=self.stride)
 
@@ -107,20 +107,20 @@ class DetectorManager():
                         label = f'{self.names[c]} {conf:.2f}'
                         plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=self.line_thickness)
 
-                        # Populate message 
+                        # Populate message
                         detection_msg = BoundingBox()
                         detection_msg.xmin = int(xyxy[0].item())
                         detection_msg.ymin = int(xyxy[1].item())
                         detection_msg.xmax = int(xyxy[2].item())
                         detection_msg.ymax = int(xyxy[3].item())
-                        detection_msg.probability = conf.item() 
+                        detection_msg.probability = conf.item()
                         detection_msg.Class = self.names[c]
                         detection_results.bounding_boxes.append(detection_msg)
                 self.pub_.publish(detection_results)
                 image_msg = self.bridge.cv2_to_imgmsg(im0, "bgr8")
                 self.pub_viz_.publish(image_msg)
         rospy.loginfo(time.time() - t0)
-                
+
 if __name__ == '__main__':
     rospy.init_node("detector_manager_node")
     dm = DetectorManager()
